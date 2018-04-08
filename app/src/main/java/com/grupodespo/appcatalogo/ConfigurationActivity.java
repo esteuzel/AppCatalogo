@@ -1,74 +1,101 @@
 package com.grupodespo.appcatalogo;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import com.grupodespo.appcatalogo.helpers.AdminSQLiteOpenHelper;
 import com.grupodespo.appcatalogo.helpers.GetHttpCategories;
+import com.grupodespo.appcatalogo.helpers.GetHttpProducts;
 import com.grupodespo.appcatalogo.models.Category;
+import com.grupodespo.appcatalogo.models.Product;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ConfigurationActivity extends AppCompatActivity {
     //private View mProgressView;
-    private Button downloadCategories;
-    private Button emptyCategories;
+    private Button downloadProducts;
+    private Button emptyProducts;
+    private EditText urlText;
+    private Button saveUrl;
     private ListView list;
     private ArrayAdapter<String> adapter;
     private ArrayList<String> arrayList;
-    private List<Category> items = new ArrayList();
+    private List<Product> items = new ArrayList();
+    private List<Category> categories = new ArrayList();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_configuration);
+        SharedPreferences preferencias = getSharedPreferences("preferencias", Context.MODE_PRIVATE);
+        urlText = (EditText) findViewById(R.id.urlText);
+        urlText.setText(preferencias.getString("url",""));
+        saveUrl = (Button) findViewById(R.id.saveUrl);
+        saveUrl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                savePreferences(v);
+            }
+        });
 
         list = (ListView) findViewById(R.id.contiguration_logs);
         arrayList = new ArrayList<String>();
         adapter = new ArrayAdapter<String>(getApplicationContext(),R.layout.log_item, arrayList);
         list.setAdapter(adapter);
-        downloadCategories = (Button) findViewById(R.id.downloadCategories);
-        downloadCategories.setOnClickListener(new View.OnClickListener() {
+        downloadProducts = (Button) findViewById(R.id.downloadProducts);
+        downloadProducts.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                goDownloadCategories();
+                goDownloadProducts();
             }
         });
-        emptyCategories = (Button) findViewById(R.id.emptyCategories);
-        emptyCategories.setOnClickListener(new View.OnClickListener() {
+        emptyProducts = (Button) findViewById(R.id.emptyProducts);
+        emptyProducts.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                goEmptyCategories();
+                goEmptyProducts();
                 adapter.notifyDataSetChanged();
             }
         });
     }
 
-    private void goDownloadCategories() {
+    public void savePreferences(View view){
+        SharedPreferences preferencias = getSharedPreferences("preferencias",Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferencias.edit();
+        editor.putString("url", urlText.getText().toString());
+        editor.commit();
+        //finish();
+    }
+
+    private void goDownloadProducts() {
         if(checkInternetConenction()){
-            GetHttpCategories wsClientes = new GetHttpCategories(ConfigurationActivity.this, items, adapter, list, arrayList, null);
-            wsClientes.execute();
+            GetHttpCategories wsCategories = new GetHttpCategories(ConfigurationActivity.this, categories, adapter, list, arrayList, null);
+            wsCategories.execute();
+            GetHttpProducts wsProducts = new GetHttpProducts(ConfigurationActivity.this, items, adapter, list, arrayList, null);
+            wsProducts.execute();
         }else{
             Log.d("main","NO coneactado");
         }
-
-        /*arrayList.add("fabio");
-        arrayList.add("esteban");
-        arrayList.add("Uzeltinger");
-        adapter.notifyDataSetChanged();*/
     }
 
-    private void goEmptyCategories(){
+    private void goEmptyProducts(){
         if(checkInternetConenction()){
             AdminSQLiteOpenHelper db = new AdminSQLiteOpenHelper(ConfigurationActivity.this,null,null,0);
+            db.emptyProducts();
             db.emptyCategories();
             arrayList.clear();
             Toast.makeText(this, "Base de datos vaciada", Toast.LENGTH_SHORT).show();

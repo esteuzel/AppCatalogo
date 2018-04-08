@@ -25,12 +25,27 @@
         <activity
             android:name=".ConfigurationActivity"
             android:label="@string/configuration_activity_name"
-            android:parentActivityName=".MainActivity"></activity>
+            android:parentActivityName=".MainActivity" />
+        <activity
+            android:name=".CategoriesActivity"
+            android:label="@string/title_activity_categories"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".SubcategoriesActivity"
             android:label="@string/title_activity_subcategories"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:parentActivityName=".MainActivity"></activity>
+            android:parentActivityName=".CategoriesActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".ProductsListActivity"
+            android:label="@string/title_activity_products_list"
+            android:parentActivityName=".SubcategoriesActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".ProductDetailActivity"
+            android:label="@string/title_activity_product_detail"
+            android:parentActivityName=".ProductsListActivity"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

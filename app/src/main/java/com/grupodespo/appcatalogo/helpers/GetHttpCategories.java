@@ -92,7 +92,7 @@ public class GetHttpCategories extends AsyncTask<Void, Void, String> {
                 this.httpList.add(new Category(id, parent, name));
                 String msj = "id: " + id + " parent: " + parent + " name: " + name ;
                 Log.d("onPostExecute" ,msj);
-                this.arrayList.add(name);
+                this.arrayList.add("Categoria: " + name);
                 this.adapter.notifyDataSetChanged();
             }
             // Crear un nuevo adaptador
@@ -102,7 +102,7 @@ public class GetHttpCategories extends AsyncTask<Void, Void, String> {
             e.printStackTrace();
         }
         AdminSQLiteOpenHelper db = new AdminSQLiteOpenHelper(httpContext,null,null,0);
-
+        //db.emptyCategories();
         db.saveCategories(this.httpList);
         progressDialog.dismiss();
     }

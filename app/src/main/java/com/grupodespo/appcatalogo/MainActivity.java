@@ -1,6 +1,9 @@
 package com.grupodespo.appcatalogo;
 
+import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -12,6 +15,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import com.grupodespo.appcatalogo.adapters.categoriesAdapter;
@@ -20,24 +25,29 @@ import com.grupodespo.appcatalogo.helpers.AdminSQLiteOpenHelper;
 import com.grupodespo.appcatalogo.models.Category;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+    Dialog ThisDialog;
+    /*
     private List<Category> categories = new ArrayList();
     private List<Category> categoriesList = new ArrayList();
     private RecyclerView categoriesRecyclerView;
     private RecyclerView.Adapter categoriesAdapter;
     private RecyclerView.LayoutManager categoriesLayoutManager;
+    */
     private TextView textViewWelcome;
+    private Button buttonCloseClient;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+/*
         categoriesRecyclerView = (RecyclerView) findViewById(R.id.recycler_category_list);
-        textViewWelcome = (TextView) findViewById(R.id.textViewWelcome);
+
 
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
@@ -52,25 +62,42 @@ public class MainActivity extends AppCompatActivity {
         categoriesRecyclerView.setAdapter(categoriesAdapter);
 
         int categorySelectedId = 0;
-        /*  obtener Categorías  */
         getCategories(categorySelectedId);
+*/
+        textViewWelcome = (TextView) findViewById(R.id.textViewWelcome);
+        SharedPreferences preferencias = getSharedPreferences("preferencias", Context.MODE_PRIVATE);
+        buttonCloseClient = (Button) findViewById(R.id.buttonCloseClient);
 
+        String clienteName = preferencias.getString("clienteName","");
+        if(clienteName.length()>0){
+            textViewWelcome.setText("Hay un cliente Abierto: " + clienteName);
+            buttonCloseClient.setVisibility(View.VISIBLE);
+        }else{
+            textViewWelcome.setText("Catálogo de Grupo Despo.");
+            buttonCloseClient.setVisibility(View.GONE);
+        }
+        buttonCloseClient.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                closeSale(v);
+            }
+        });
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-                goConfiguration();
+                addSale(view);
             }
         });
-    }
 
+    }
+/*
     private void getCategories(int categorySelectedId) {
         AdminSQLiteOpenHelper db = new AdminSQLiteOpenHelper(MainActivity.this,null,null,0);
         categoriesList = db.getCategories(0);
+        Log.i("MAIN", "categoriesList: "  + categoriesList.size());
         for(int i=0; i<categoriesList.size(); i++) {
-            //Log.i("MAIN", "categoriesList: "  + categories.get(i));
+            //Log.i("MAIN", "categoriesList: "  + categoriesList.get(i));
             categories.add(categoriesList.get(i));
         }
         if(categories.size()>0) {
@@ -78,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
         }
         //categoriesAdapter.notifyDataSetChanged();
     }
-
+*/
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -97,8 +124,51 @@ public class MainActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
-    private void goConfiguration() {
-        Intent intent = new Intent(this, ConfigurationActivity.class);
-        this.startActivity(intent);
+    private void addSale(View view) {
+        SharedPreferences preferencias = getSharedPreferences("preferencias", Context.MODE_PRIVATE);
+        String clienteName = preferencias.getString("clienteName","");
+        if(clienteName.length()==0){
+            Snackbar.make(view, "Debe asignar un cliente", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+            showClientDialog(view);
+
+        }else{
+            Intent intent = new Intent(this, CategoriesActivity.class);
+            this.startActivity(intent);
+        }
+
+    }
+    private void closeSale(View view) {
+        buttonCloseClient.setVisibility(View.GONE);
+        saveClientPreferences(view,"");
+        textViewWelcome.setText("Catálogo de Grupo Despo.");
+    }
+
+    private void showClientDialog(View view){
+        ThisDialog = new Dialog(MainActivity.this);
+        ThisDialog.setTitle("Save Your Name");
+        ThisDialog.setContentView(R.layout.dialog_template);
+        final EditText textClienteName = (EditText)ThisDialog.findViewById(R.id.textClienteName);
+        Button SaveClientName = (Button)ThisDialog.findViewById(R.id.SaveClientName);
+        textClienteName.setEnabled(true);
+        SaveClientName.setEnabled(true);
+        SaveClientName.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                saveClientPreferences(v, textClienteName.getText().toString());
+                buttonCloseClient.setVisibility(View.VISIBLE);
+                ThisDialog.cancel();
+            }
+        });
+        ThisDialog.show();
+    }
+
+    private void saveClientPreferences(View view, String name){
+        SharedPreferences preferencias = getSharedPreferences("preferencias",Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferencias.edit();
+        editor.putString("clienteName", name);
+        editor.commit();
+        textViewWelcome.setText("Hay un cliente Abierto: " + name);
+        //finish();
     }
 }

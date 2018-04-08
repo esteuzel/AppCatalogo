@@ -5,6 +5,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 import com.grupodespo.appcatalogo.models.Category;
+import com.grupodespo.appcatalogo.models.Product;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,6 +42,7 @@ public class AdminSQLiteOpenHelper extends SQLiteOpenHelper{
                 "productDetail text," +
                 "productImage text" +
                 ")");
+        Log.d("AdminSQLiteOpenHelper", "onCreate");
     }
 
     public void doLoadInitialData(SQLiteDatabase db){
@@ -61,17 +64,35 @@ public class AdminSQLiteOpenHelper extends SQLiteOpenHelper{
     }
 
     public void saveCategories(List<Category> cats){
+        emptyCategories();
         SQLiteDatabase db = getReadableDatabase();
         for(int i=0; i<cats.size(); i++) {
             long insert =  db.insert("categorias",
                     null, cats.get(i).toContentValues());
-            Log.d("AdminSQLiteOpenHelper" ,"doLoadInitialData categorias agrtegadas: "
-                    + cats.size());
         }
+        Log.d("AdminSQLiteOpenHelper" ,"saveCategories categorias agrtegadas: "
+                + cats.size());
+    }
+    public void saveProducts(List<Product> products){
+        SQLiteDatabase db = getReadableDatabase();
+        emptyProducts();
+        for(int i=0; i<products.size(); i++) {
+            long insert =  db.insert("productos",
+                    null, products.get(i).toContentValues());
+        }
+        Log.d("AdminSQLiteOpenHelper" ,"saveProducts productos agrtegados: "
+                + products.size());
     }
     public void emptyCategories(){
         SQLiteDatabase db = getReadableDatabase();
         db.execSQL("DROP TABLE IF EXISTS categorias");
+        Log.d("AdminSQLiteOpenHelper", "emptyCategories");
+        onCreate(db);
+    }
+    public void emptyProducts(){
+        SQLiteDatabase db = getReadableDatabase();
+        db.execSQL("DROP TABLE IF EXISTS productos");
+        Log.d("AdminSQLiteOpenHelper", "emptyProductos");
         onCreate(db);
     }
     public List<Category> getAllCategories(){
@@ -117,7 +138,34 @@ public class AdminSQLiteOpenHelper extends SQLiteOpenHelper{
             Category item = new Category(id, parent, name);
             list.add(item);
         }
-        Log.d("AdminSQLiteOpenHelper" ,"getAllCategories total: " + list.size());
+        Log.d("AdminSQLiteOpenHelper" ,"getCategories total: " + list.size());
         return list;
     }
+
+    public List<Product> getProducts(int categoryParentId){
+        List<Product> list = new ArrayList();
+        SQLiteDatabase db = getReadableDatabase();
+        //doLoadInitialData(db);
+        Cursor c = db.query(
+                "productos",  // Nombre de la tabla
+                null,  // Lista de Columnas a consultar
+                "catid=?",  // Columnas para la cláusula WHERE
+                new String[] { String.valueOf(categoryParentId)},  // Valores a comparar con las columnas del WHERE
+                null,  // Agrupar con GROUP BY
+                null,  // Condición HAVING para GROUP BY
+                "name"  // Cláusula ORDER BY
+        );
+        while(c.moveToNext()){
+            int id = Integer.parseInt(c.getString(c.getColumnIndex("id")));
+            int catid = Integer.parseInt(c.getString(c.getColumnIndex("catid")));
+            String name = c.getString(c.getColumnIndex("name"));
+            String detail = c.getString(c.getColumnIndex("detail"));
+            String image = c.getString(c.getColumnIndex("image"));
+            Product item = new Product(id, catid, name, detail, image);
+            list.add(item);
+        }
+        Log.d("AdminSQLiteOpenHelper" ,"getProducts total: " + list.size());
+        return list;
+    }
+
 }
